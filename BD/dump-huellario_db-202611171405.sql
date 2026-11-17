@@ -27,7 +27,7 @@ CREATE TABLE `pets` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` int(10) unsigned NOT NULL,
   `name` varchar(80) NOT NULL,
-  `species` enum('PERRO','GATO','AVE','HAMSTER','OTRO') NOT NULL,
+  `species` enum('PERRO','GATO','AVE','HAMSTER','PEZ','OTRO') NOT NULL DEFAULT 'OTRO',
   `species_detail` varchar(80) DEFAULT NULL,
   `breed` varchar(100) DEFAULT NULL,
   `birth_date` date DEFAULT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE `pets` (
   PRIMARY KEY (`id`),
   KEY `fk_pets_user` (`user_id`),
   CONSTRAINT `fk_pets_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -47,7 +47,7 @@ LOCK TABLES `pets` WRITE;
 /*!40000 ALTER TABLE `pets` DISABLE KEYS */;
 INSERT INTO `pets` VALUES
 (1,1,'Orión','GATO',NULL,'Siamés','2025-06-13',NULL,'2026-11-10 01:40:11'),
-(2,1,'Roxi','PERRO',NULL,'Criolla','2017-08-13',NULL,'2026-11-10 19:01:43');
+(3,1,'Roxi','PERRO',NULL,'Criolla','2018-08-13',NULL,'2026-11-17 02:45:56');
 /*!40000 ALTER TABLE `pets` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -62,7 +62,7 @@ CREATE TABLE `routine_logs` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `routine_id` int(10) unsigned NOT NULL,
   `scheduled_date` date NOT NULL,
-  `status` enum('PENDIENTE','COMPLETADA','OMITIDA') NOT NULL DEFAULT 'PENDIENTE',
+  `status` enum('PENDIENTE','COMPLETADA','NO_FINALIZADA','OMITIDA') NOT NULL DEFAULT 'PENDIENTE',
   `completed_at` datetime DEFAULT NULL,
   `notes` varchar(500) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
@@ -71,7 +71,7 @@ CREATE TABLE `routine_logs` (
   KEY `idx_logs_date` (`scheduled_date`),
   KEY `idx_logs_status` (`status`),
   CONSTRAINT `fk_routine_logs_routine` FOREIGN KEY (`routine_id`) REFERENCES `routines` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -80,6 +80,9 @@ CREATE TABLE `routine_logs` (
 
 LOCK TABLES `routine_logs` WRITE;
 /*!40000 ALTER TABLE `routine_logs` DISABLE KEYS */;
+INSERT INTO `routine_logs` VALUES
+(1,4,'2026-11-17','NO_FINALIZADA',NULL,NULL,'2026-11-17 18:48:53'),
+(2,7,'2026-11-17','NO_FINALIZADA',NULL,NULL,'2026-11-17 18:50:06');
 /*!40000 ALTER TABLE `routine_logs` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -109,7 +112,7 @@ CREATE TABLE `routines` (
   KEY `idx_routines_active` (`is_active`),
   KEY `idx_routines_dates` (`start_date`,`end_date`),
   CONSTRAINT `fk_routines_pet` FOREIGN KEY (`pet_id`) REFERENCES `pets` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -119,10 +122,11 @@ CREATE TABLE `routines` (
 LOCK TABLES `routines` WRITE;
 /*!40000 ALTER TABLE `routines` DISABLE KEYS */;
 INSERT INTO `routines` VALUES
-(1,2,'Pasear','EJERCICIO',NULL,'11:00:00','SEMANAL',NULL,'2026-11-09',NULL,1,'2026-11-10 19:03:29','2026-11-10 19:03:29'),
-(2,2,'Pasear','EJERCICIO',NULL,'11:00:00','DIARIA',NULL,'2026-11-09',NULL,1,'2026-11-10 19:13:42','2026-11-10 19:13:42'),
 (3,1,'Bañar','HIGIENE','Usar el shampoo de tapa azul','03:00:00','SEMANAL',NULL,'2026-11-09',NULL,1,'2026-11-10 19:15:37','2026-11-10 19:15:37'),
-(4,1,'Pasear','EJERCICIO',NULL,'08:00:00','DIARIA',NULL,'2026-11-10',NULL,1,'2026-11-10 19:22:08','2026-11-10 19:22:08');
+(4,1,'Pasear','EJERCICIO',NULL,'08:00:00','DIARIA',NULL,'2026-11-10',NULL,1,'2026-11-10 19:22:08','2026-11-10 19:22:08'),
+(6,3,'Cepillar','LIMPIEZA',NULL,'10:00:00','UNICA',NULL,'2026-11-16',NULL,1,'2026-11-17 02:47:16','2026-11-17 02:47:16'),
+(7,3,'Desayuno','ALIMENTACION',NULL,'08:00:00','DIARIA',NULL,'2026-11-17',NULL,1,'2026-11-17 18:49:37','2026-11-17 18:49:37'),
+(8,3,'Cena','ALIMENTACION',NULL,'18:00:00','DIARIA',NULL,'2026-11-17',NULL,1,'2026-11-17 18:49:56','2026-11-17 18:49:56');
 /*!40000 ALTER TABLE `routines` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -170,4 +174,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-11-10 14:47:24
+-- Dump completed on 2026-11-17 14:05:55
