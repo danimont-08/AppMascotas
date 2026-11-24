@@ -237,7 +237,9 @@ fun PetGridCardItem(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
             if (fullPhotoUrl != null) {
                 AsyncImage(

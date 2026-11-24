@@ -47,6 +47,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -95,6 +102,26 @@ fun RoutinesScreen(
     LaunchedEffect(initialPetId) {
         if (initialPetId != null) viewModel.onPetFilterSelected(initialPetId)
         viewModel.loadPetsAndDailyRoutines()
+    }
+
+    // Rutina que el usuario quiere eliminar; mientras no sea null se muestra la confirmación
+    var routineToDelete by remember { mutableStateOf<RoutineDto?>(null) }
+
+    routineToDelete?.let { routine ->
+        AlertDialog(
+            onDismissRequest = { routineToDelete = null },
+            title = { Text("Eliminar rutina") },
+            text = { Text("¿Seguro que quieres eliminar \"${routine.title}\"? También se borrará su historial de cumplimiento. Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteRoutine(routine.id)
+                    routineToDelete = null
+                }) { Text("Eliminar", color = ErrorRed) }
+            },
+            dismissButton = {
+                TextButton(onClick = { routineToDelete = null }) { Text("Cancelar") }
+            }
+        )
     }
 
     Scaffold(
@@ -265,7 +292,8 @@ fun RoutinesScreen(
                                 routine = routine,
                                 canChangeStatus = uiState.selectedDate <= today,
                                 onStatusChange = { newStatus -> viewModel.markLogStatus(routine.id, newStatus) },
-                                onClick = { onEditRoutineClick(routine.id) }
+                                onClick = { onEditRoutineClick(routine.id) },
+                                onDelete = { routineToDelete = routine }
                             )
                         }
                     }
@@ -285,32 +313,20 @@ fun RoutineCardItem(
     canChangeStatus: Boolean = true,
     onStatusChange: (String) -> Unit,
     onClick: () -> Unit,
+    onDelete: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val categoryLabel = when (routine.category.uppercase()) {
-        "ALIMENTACION" -> "Alimentación"
-        "AGUA" -> "Agua"
-        "HIGIENE" -> "Higiene"
-        "EJERCICIO" -> "Ejercicio"
-        "MEDICACION" -> "Medicación"
-        "LIMPIEZA" -> "Limpieza"
-        "SOCIALIZACION" -> "Socialización"
+        "ALIMENTACION", "AGUA" -> "Alimentación"
+        "HIGIENE", "LIMPIEZA" -> "Higiene"
+        "SALUD", "MEDICACION" -> "Salud"
+        "ACTIVIDAD", "EJERCICIO", "SOCIALIZACION" -> "Actividad"
+        "JUEGO" -> "Juego"
+        "OTRO" -> "Otro"
         else -> routine.category.replaceFirstChar { it.uppercase() }
     }
 
-    val currentStatus = when (routine.status?.uppercase()) {
-        "COMPLETADA", "COMPLETED" -> "COMPLETED"
-        "NO_FINALIZADA" -> "NOT_FINISHED"
-        "OMITIDA", "SKIPPED" -> "SKIPPED"
-        else -> "PENDING"
-    }
-
-    val statusBadgeText = when (currentStatus) {
-        "COMPLETED" -> "Completada"
-        "SKIPPED" -> "Omitida"
-        "NOT_FINISHED" -> "No finalizada"
-        else -> "Pendiente"
-    }
+    val isCompleted = routine.status?.uppercase() in setOf("COMPLETADA", "COMPLETED")
 
     val priorityCode = routine.priority?.uppercase() ?: "MEDIA"
 
@@ -321,40 +337,21 @@ fun RoutineCardItem(
         modifier = modifier.fillMaxWidth().clickable { onClick() }
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
-            // Botón de estado interactivo
+            // Casilla de cumplimiento: chulito verde si está hecha, círculo vacío si no
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
-                    .background(
-                        when (currentStatus) {
-                            "COMPLETED" -> SuccessContainerGreen
-                            "SKIPPED", "NOT_FINISHED" -> ErrorRed.copy(alpha = 0.15f)
-                            else -> AzulSuave
-                        }
-                    )
                     .clickable(enabled = canChangeStatus) {
-                        val nextStatus = when (currentStatus) {
-                            "COMPLETED", "SKIPPED" -> "PENDING"
-                            else -> "COMPLETED"
-                        }
-                        onStatusChange(nextStatus)
+                        onStatusChange(if (isCompleted) "PENDING" else "COMPLETED")
                     }
             ) {
                 Icon(
-                    imageVector = when (currentStatus) {
-                        "COMPLETED" -> Icons.Default.CheckCircle
-                        "SKIPPED", "NOT_FINISHED" -> Icons.Default.Close
-                        else -> Icons.Default.RadioButtonUnchecked
-                    },
-                    contentDescription = "Estado de rutina",
-                    tint = when (currentStatus) {
-                        "COMPLETED" -> SuccessGreen
-                        "SKIPPED", "NOT_FINISHED" -> ErrorRed
-                        else -> AzulPrincipal
-                    },
-                    modifier = Modifier.size(28.dp)
+                    imageVector = if (isCompleted) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                    contentDescription = if (isCompleted) "Marcar como pendiente" else "Marcar como hecha",
+                    tint = if (isCompleted) SuccessGreen else TextoMuted,
+                    modifier = Modifier.size(32.dp)
                 )
             }
 
@@ -377,67 +374,45 @@ fun RoutineCardItem(
                         style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
                         color = AzulPrincipal
                     )
+                    IconButton(onClick = onClick, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Editar rutina",
+                            tint = VioletaPrincipal,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Eliminar rutina",
+                            tint = ErrorRed,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    if (!routine.petName.isNullOrBlank()) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Icon(imageVector = Icons.Default.Pets, contentDescription = null, tint = TextoMuted, modifier = Modifier.size(12.dp))
-                            Text(text = routine.petName, style = MaterialTheme.typography.bodySmall, color = TextoMuted)
-                        }
-                    }
-
+                // Prioridad y categoría como texto simple (sin etiquetas)
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(priorityColor(priorityCode).copy(alpha = 0.15f))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = priorityLabel(priorityCode),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = priorityColor(priorityCode)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Lavanda)
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text(text = categoryLabel, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = VioletaPrincipal)
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                when (currentStatus) {
-                                    "COMPLETED" -> SuccessContainerGreen
-                                    "SKIPPED", "NOT_FINISHED" -> ErrorRed.copy(alpha = 0.15f)
-                                    else -> AzulSuave
-                                }
-                            )
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = statusBadgeText,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = when (currentStatus) {
-                                "COMPLETED" -> SuccessGreen
-                                "SKIPPED", "NOT_FINISHED" -> ErrorRed
-                                else -> TextoCharcoal
-                            }
-                        )
-                    }
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(priorityColor(priorityCode))
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Prioridad ${priorityLabel(priorityCode).lowercase()}",
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = priorityColor(priorityCode)
+                    )
+                    Text(
+                        text = "  ·  $categoryLabel",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextoMuted
+                    )
                 }
             }
         }

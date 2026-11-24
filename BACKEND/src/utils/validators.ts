@@ -82,6 +82,14 @@ export const normalizeSpecies = (species: unknown): 'PERRO' | 'GATO' | 'AVE' | '
   return null;
 };
 
+// Convierte el peso (número o texto con punto o coma decimal) a kilos; null si no es válido.
+export const parsePetWeight = (value: unknown): number | null => {
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
+  const weight = Number(String(value).trim().replace(',', '.'));
+  if (!Number.isFinite(weight) || weight <= 0 || weight > 300) return null;
+  return Math.round(weight * 100) / 100;
+};
+
 export const validatePetInput = (input: unknown): { valid: boolean; message?: string } => {
   if (!input || typeof input !== 'object') {
     return { valid: false, message: 'Los datos enviados no son válidos' };
@@ -127,11 +135,41 @@ export const validatePetInput = (input: unknown): { valid: boolean; message?: st
     }
   }
 
+  if (body.weight_kg !== undefined && body.weight_kg !== null && body.weight_kg !== '') {
+    if (parsePetWeight(body.weight_kg) === null) {
+      return { valid: false, message: 'El peso debe ser un número mayor que 0 y menor o igual a 300 kg' };
+    }
+  }
+
   if (body.photo_url !== undefined && body.photo_url !== null && typeof body.photo_url !== 'string') {
     return { valid: false, message: 'La URL de la foto debe ser texto o nula' };
   }
 
   return { valid: true };
+};
+
+// Categorías generales de las rutinas. Las antiguas se siguen aceptando y se convierten
+// a su categoría general (por ejemplo AGUA -> ALIMENTACION).
+const routineCategoryAliases: Record<string, 'ALIMENTACION' | 'HIGIENE' | 'SALUD' | 'ACTIVIDAD' | 'JUEGO' | 'OTRO'> = {
+  ALIMENTACION: 'ALIMENTACION',
+  AGUA: 'ALIMENTACION',
+  HIGIENE: 'HIGIENE',
+  LIMPIEZA: 'HIGIENE',
+  SALUD: 'SALUD',
+  MEDICACION: 'SALUD',
+  ACTIVIDAD: 'ACTIVIDAD',
+  EJERCICIO: 'ACTIVIDAD',
+  SOCIALIZACION: 'ACTIVIDAD',
+  JUEGO: 'JUEGO',
+  DIVERSION: 'JUEGO',
+  OTRO: 'OTRO',
+};
+
+export const normalizeRoutineCategory = (
+  category: unknown,
+): 'ALIMENTACION' | 'HIGIENE' | 'SALUD' | 'ACTIVIDAD' | 'JUEGO' | 'OTRO' | null => {
+  if (typeof category !== 'string') return null;
+  return routineCategoryAliases[category.trim().toUpperCase()] ?? null;
 };
 
 export const validateRoutineInput = (input: unknown): { valid: boolean; message?: string } => {
@@ -157,7 +195,7 @@ export const validateRoutineInput = (input: unknown): { valid: boolean; message?
     return { valid: false, message: 'El nombre de la rutina debe tener entre 2 y 100 caracteres' };
   }
 
-  if (!['ALIMENTACION', 'AGUA', 'HIGIENE', 'EJERCICIO', 'MEDICACION', 'LIMPIEZA', 'SOCIALIZACION', 'OTRO'].includes(category)) {
+  if (!normalizeRoutineCategory(category)) {
     return { valid: false, message: 'La categoría de la rutina es inválida' };
   }
 

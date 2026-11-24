@@ -5,6 +5,8 @@ import {
   validateRegisterInput,
   validateRoutineInput,
   validateUpdateProfileInput,
+  normalizeRoutineCategory,
+  parsePetWeight,
 } from '../utils/validators';
 
 describe('validators', () => {
@@ -52,6 +54,32 @@ describe('validators', () => {
       selected_days: ['LUNES', 'MIERCOLES'],
       start_date: '2026-11-16',
     }).valid).toBe(true);
+  });
+
+  it.each([
+    ['AGUA', 'ALIMENTACION'],
+    ['LIMPIEZA', 'HIGIENE'],
+    ['MEDICACION', 'SALUD'],
+    ['EJERCICIO', 'ACTIVIDAD'],
+    ['SOCIALIZACION', 'ACTIVIDAD'],
+    ['salud', 'SALUD'],
+    ['JUEGO', 'JUEGO'],
+    ['DIVERSION', 'JUEGO'],
+  ])('maps routine category %s to %s', (input, expected) => {
+    expect(normalizeRoutineCategory(input)).toBe(expected);
+  });
+
+  it.each([['4.5', 4.5], ['4,5', 4.5], [12, 12]])('parses pet weight %s', (input, expected) => {
+    expect(parsePetWeight(input)).toBe(expected);
+  });
+
+  it.each(['0', '-3', 'abc', '500'])('rejects invalid pet weight %s', (input) => {
+    expect(parsePetWeight(input)).toBeNull();
+    expect(validatePetInput({ name: 'Luna', species: 'GATO', weight_kg: input }).valid).toBe(false);
+  });
+
+  it('rejects an unknown routine category', () => {
+    expect(normalizeRoutineCategory('JUGUETES')).toBeNull();
   });
 
   it('accepts a valid profile update', () => {

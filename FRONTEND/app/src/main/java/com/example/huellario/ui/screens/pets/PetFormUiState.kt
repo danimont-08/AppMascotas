@@ -12,6 +12,8 @@ data class PetFormUiState(
     val specificSpecies: String = "",
     val breed: String = "",
     val birthDate: String = "",
+    val weightKg: String = "",
+    val weightError: String? = null,
     val photoUri: Uri? = null,
     val existingPhotoUrl: String? = null,
     val nameError: String? = null,

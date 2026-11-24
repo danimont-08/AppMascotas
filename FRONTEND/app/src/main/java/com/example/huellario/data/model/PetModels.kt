@@ -18,6 +18,8 @@ data class PetDto(
     val breed: String? = null,
     @SerializedName("birth_date")
     val birthDate: String? = null,
+    @SerializedName("weight_kg")
+    val weightKg: String? = null,
     @SerializedName("photo_url")
     val photoUrl: String? = null,
     @SerializedName("created_at")
@@ -36,6 +38,9 @@ data class PetRequest(
     val breed: String? = null,
     @SerializedName("birth_date")
     val birthDate: String? = null,
+    /** Peso en kg como texto ("" = sin peso, para poder borrarlo al editar). */
+    @SerializedName("weight_kg")
+    val weightKg: String? = null,
     @SerializedName("photo_url")
     val photoUrl: String? = null
 )

@@ -2,7 +2,7 @@
 import { petRepository } from '../repositories/pet.repository';
 import { PetPayload, PetRecord } from '../types';
 import { ApiError } from '../utils/errors';
-import { normalizeSpecies } from '../utils/validators';
+import { normalizeSpecies, parsePetWeight } from '../utils/validators';
 
 export const petService = {
   async listByUser(userId: number): Promise<PetRecord[]> {
@@ -25,6 +25,7 @@ export const petService = {
       species,
       birth_date: cleanBirthDate,
       species_detail: payload.species_detail ?? null,
+      weight_kg: parsePetWeight(payload.weight_kg),
     });
 
     const pet = await petRepository.findByIdAndUser(createdId, userId);
@@ -58,6 +59,10 @@ export const petService = {
       } else {
         payload.birth_date = null;
       }
+    }
+
+    if (payload.weight_kg !== undefined) {
+      payload.weight_kg = parsePetWeight(payload.weight_kg);
     }
 
     if (payload.species_detail !== undefined) {

@@ -65,6 +65,16 @@ class RoutinesViewModel(
         loadDailyRoutines()
     }
 
+    fun deleteRoutine(routineId: Int) {
+        viewModelScope.launch {
+            when (val result = routineRepository.deleteRoutine(routineId)) {
+                is ApiResult.Success -> loadDailyRoutines()
+                is ApiResult.Error -> _uiState.update { it.copy(errorMessage = result.message) }
+                else -> {}
+            }
+        }
+    }
+
     fun markLogStatus(routineId: Int, newStatus: String) {
         viewModelScope.launch {
             val date = _uiState.value.selectedDate

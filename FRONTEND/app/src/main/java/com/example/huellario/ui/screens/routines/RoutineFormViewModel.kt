@@ -59,13 +59,19 @@ class RoutineFormViewModel(
                                 routineId = routine.id,
                                 petId = routine.petId,
                                 title = routine.title,
-                                category = routine.category,
+                                category = when (routine.category.uppercase()) {
+                                    "AGUA" -> "ALIMENTACION"
+                                    "LIMPIEZA" -> "HIGIENE"
+                                    "MEDICACION" -> "SALUD"
+                                    "EJERCICIO", "SOCIALIZACION" -> "ACTIVIDAD"
+                                    else -> routine.category.uppercase()
+                                },
                                 description = routine.description ?: "",
                                 priority = routine.priority?.uppercase() ?: "MEDIA",
                                 scheduledTime = routine.scheduledTime.take(5),
                                 frequency = routine.frequency,
-                                startDate = routine.startDate,
-                                endDate = routine.endDate ?: "",
+                                startDate = routine.startDate.take(10),
+                                endDate = routine.endDate?.take(10) ?: "",
                                 selectedDays = routine.selectedDays ?: "",
                                 isLoading = false
                             )
@@ -101,7 +107,7 @@ class RoutineFormViewModel(
     }
 
     fun onTimeChanged(time: String) {
-        _uiState.update { it.copy(scheduledTime = time) }
+        _uiState.update { it.copy(scheduledTime = time, scheduledTimeError = null) }
     }
 
     fun onFrequencyChanged(frequency: String) {
@@ -131,11 +137,18 @@ class RoutineFormViewModel(
             hasError = true
         }
 
+        var scheduledTimeError: String? = null
+        if (state.scheduledTime.isBlank()) {
+            scheduledTimeError = "Elige la hora de la rutina"
+            hasError = true
+        }
+
         if (hasError) {
             _uiState.update {
                 it.copy(
                     titleError = titleError,
-                    petIdError = petIdError
+                    petIdError = petIdError,
+                    scheduledTimeError = scheduledTimeError
                 )
             }
             return
@@ -147,7 +160,7 @@ class RoutineFormViewModel(
             category = state.category,
             description = state.description.trim().ifEmpty { null },
             priority = state.priority,
-            scheduledTime = state.scheduledTime.ifEmpty { "08:00" },
+            scheduledTime = state.scheduledTime,
             frequency = state.frequency,
             startDate = state.startDate,
             endDate = state.endDate.trim().ifEmpty { null },

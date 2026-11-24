@@ -231,6 +231,13 @@ fun PetDetailScreen(
                             Spacer(modifier = Modifier.height(12.dp))
                             DetailRow(label = "Fecha de nacimiento", value = pet.birthDate.take(10))
                         }
+
+                        val weight = pet.weightKg?.toDoubleOrNull()
+                        if (weight != null) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            val weightText = if (weight % 1.0 == 0.0) weight.toInt().toString() else weight.toString()
+                            DetailRow(label = "Peso", value = "$weightText kg")
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))

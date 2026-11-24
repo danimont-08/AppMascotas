@@ -10,7 +10,7 @@ object ApiConfig {
     }
 
     // MODO DE RED:
-    var currentMode: NetworkMode = NetworkMode.HOTSPOT
+    var currentMode: NetworkMode = NetworkMode.EMULATOR
 
 
     var wifiIp: String = "192.168.66.172"

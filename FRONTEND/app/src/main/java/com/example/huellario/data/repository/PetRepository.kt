@@ -8,7 +8,8 @@ import com.example.huellario.data.remote.PetApiService
 import com.example.huellario.data.remote.RetrofitClient
 import com.google.gson.Gson
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.Response
 import java.io.File
 
@@ -83,9 +84,10 @@ class PetRepository(
         }
     }
 
-    suspend fun uploadPetPhoto(id: Int, imageFile: File): ApiResult<PetDto> {
+    suspend fun uploadPetPhoto(id: Int, imageFile: File, mimeType: String = "image/jpeg"): ApiResult<PetDto> {
         return try {
-            val requestFile = RequestBody.create(null, imageFile)
+            // El backend solo acepta JPEG, PNG o WebP, así que hay que indicar el tipo de imagen
+            val requestFile = imageFile.asRequestBody(mimeType.toMediaTypeOrNull())
             val body = MultipartBody.Part.createFormData("photo", imageFile.name, requestFile)
             val response = apiService.uploadPetPhoto(id, body)
             if (response.isSuccessful && response.body() != null) {

@@ -30,6 +30,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Schedule
+import com.example.huellario.ui.components.PickerField
+import com.example.huellario.ui.components.TimeWheelSheet
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -190,14 +199,14 @@ fun RoutineFormScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    // Categorías generales: Alimentación incluye agua, Higiene incluye limpieza,
+                    // Salud incluye medicación, Actividad incluye ejercicio y paseos, y Juego es para jugar y divertirse.
                     val categories = listOf(
                         "ALIMENTACION" to "Alimentación",
-                        "AGUA" to "Agua",
                         "HIGIENE" to "Higiene",
-                        "EJERCICIO" to "Ejercicio",
-                        "MEDICACION" to "Medicación",
-                        "LIMPIEZA" to "Limpieza",
-                        "SOCIALIZACION" to "Socialización",
+                        "SALUD" to "Salud",
+                        "ACTIVIDAD" to "Actividad",
+                        "JUEGO" to "Juego",
                         "OTRO" to "Otro"
                     )
 
@@ -258,12 +267,31 @@ fun RoutineFormScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    HuellarioTextField(
-                        value = uiState.scheduledTime,
-                        onValueChange = { viewModel.onTimeChanged(it) },
-                        label = "Hora programada (HH:MM e.g. 08:00) *",
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+                    // Hora con rueda (hora, minutos, a. m./p. m.); no hay hora por defecto
+                    var showTimeSheet by remember { mutableStateOf(false) }
+                    val selectedTime = runCatching { LocalTime.parse(uiState.scheduledTime.take(5)) }.getOrNull()
+
+                    PickerField(
+                        value = selectedTime?.format(DateTimeFormatter.ofPattern("h:mm a", Locale.US))
+                            ?.replace("AM", "a. m.")?.replace("PM", "p. m.") ?: "",
+                        label = "Hora programada *",
+                        placeholder = "Toca para elegir la hora",
+                        icon = Icons.Default.Schedule,
+                        errorMessage = uiState.scheduledTimeError,
+                        onClick = { showTimeSheet = true }
                     )
+
+                    if (showTimeSheet) {
+                        TimeWheelSheet(
+                            title = "Hora de la rutina",
+                            initialTime = selectedTime,
+                            onDismiss = { showTimeSheet = false },
+                            onConfirm = { time ->
+                                viewModel.onTimeChanged(time.format(DateTimeFormatter.ofPattern("HH:mm")))
+                                showTimeSheet = false
+                            }
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(20.dp))
 

@@ -26,6 +26,24 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SelectableDates
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import android.content.res.Configuration
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalConfiguration
+import java.util.Locale
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,6 +64,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,6 +75,8 @@ import com.example.huellario.data.remote.ApiConfig
 import com.example.huellario.ui.components.HuellarioButton
 import com.example.huellario.ui.components.HuellarioFormCard
 import com.example.huellario.ui.components.HuellarioTextField
+import com.example.huellario.ui.components.DateWheelSheet
+import com.example.huellario.ui.components.PickerField
 import com.example.huellario.ui.theme.AzulCielo
 import com.example.huellario.ui.theme.AzulSuave
 import com.example.huellario.ui.theme.BlancoPuro
@@ -347,11 +368,20 @@ fun PetFormScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    HuellarioTextField(
+                    BirthDatePickerField(
                         value = uiState.birthDate,
-                        onValueChange = { viewModel.onBirthDateChanged(it) },
-                        label = "Fecha de nacimiento (AAAA-MM-DD) (Opcional)",
+                        onDateSelected = { viewModel.onBirthDateChanged(it) }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    HuellarioTextField(
+                        value = uiState.weightKg,
+                        onValueChange = { viewModel.onWeightChanged(it) },
+                        label = "Peso en kg (Opcional, ej. 4.5)",
+                        errorMessage = uiState.weightError,
                         keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal,
                             imeAction = ImeAction.Done
                         )
                     )
@@ -370,5 +400,46 @@ fun PetFormScreen(
                 }
             }
         }
+    }
+}
+
+/**
+ * Campo de fecha de nacimiento: al tocarlo abre una rueda (mes, día, año) en español.
+ * Guarda la fecha como AAAA-MM-DD, el formato que espera el backend. No permite fechas futuras.
+ */
+@Composable
+private fun BirthDatePickerField(
+    value: String,
+    onDateSelected: (String) -> Unit
+) {
+    var showSheet by remember { mutableStateOf(false) }
+    val currentDate = runCatching { LocalDate.parse(value.take(10)) }.getOrNull()
+    val spanish = java.util.Locale.forLanguageTag("es-CO")
+    val shownValue = currentDate?.format(java.time.format.DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", spanish)) ?: ""
+
+    PickerField(
+        value = shownValue,
+        label = "Fecha de nacimiento (Opcional)",
+        placeholder = "Toca para elegir la fecha",
+        icon = Icons.Default.CalendarMonth,
+        onClick = { showSheet = true }
+    )
+
+    if (showSheet) {
+        DateWheelSheet(
+            title = "Fecha de nacimiento",
+            initialDate = currentDate,
+            onDismiss = { showSheet = false },
+            onConfirm = { date ->
+                onDateSelected(date.toString())
+                showSheet = false
+            },
+            onClear = if (currentDate != null) {
+                {
+                    onDateSelected("")
+                    showSheet = false
+                }
+            } else null
+        )
     }
 }

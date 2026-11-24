@@ -41,7 +41,7 @@ describe('petRepository ownership filters', () => {
 
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO pets'),
-      [7, 'Orión', 'GATO', null, null, null, null],
+      [7, 'Orión', 'GATO', null, null, null, null, null],
     );
   });
 

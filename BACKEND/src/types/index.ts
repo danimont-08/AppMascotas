@@ -25,6 +25,7 @@ export interface PetRecord {
   species_detail: string | null;
   breed: string | null;
   birth_date: string | null;
+  weight_kg: string | number | null;
   photo_url: string | null;
   created_at?: string;
 }
@@ -46,19 +47,12 @@ export interface PetPayload {
   species_detail?: string | null;
   breed?: string | null;
   birth_date?: string | null;
+  weight_kg?: number | string | null;
   photo_url?: string | null;
 }
 
 export type RoutineFrequency = 'DIARIA' | 'SEMANAL' | 'DIAS_ESPECIFICOS' | 'UNICA';
-export type RoutineCategory =
-  | 'ALIMENTACION'
-  | 'AGUA'
-  | 'HIGIENE'
-  | 'EJERCICIO'
-  | 'MEDICACION'
-  | 'LIMPIEZA'
-  | 'SOCIALIZACION'
-  | 'OTRO';
+export type RoutineCategory = 'ALIMENTACION' | 'HIGIENE' | 'SALUD' | 'ACTIVIDAD' | 'JUEGO' | 'OTRO';
 export type RoutinePriority = 'ALTA' | 'MEDIA' | 'BAJA';
 export type RoutineStatus = 'PENDIENTE' | 'COMPLETADA' | 'NO_FINALIZADA' | 'OMITIDA';
 

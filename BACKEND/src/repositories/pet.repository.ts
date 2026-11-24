@@ -14,8 +14,8 @@ export const petRepository = {
 
   async create(userId: number, petData: PetPayload): Promise<number> {
     const result = await query<any>(
-      `INSERT INTO pets (user_id, name, species, species_detail, breed, birth_date, photo_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO pets (user_id, name, species, species_detail, breed, birth_date, weight_kg, photo_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         petData.name,
@@ -23,6 +23,7 @@ export const petRepository = {
         petData.species_detail ?? null,
         petData.breed ?? null,
         petData.birth_date ?? null,
+        petData.weight_kg ?? null,
         petData.photo_url ?? null,
       ],
     );
@@ -45,6 +46,7 @@ export const petRepository = {
       petData.species_detail !== undefined ? 'species_detail = ?' : null,
       petData.breed !== undefined ? 'breed = ?' : null,
       petData.birth_date !== undefined ? 'birth_date = ?' : null,
+      petData.weight_kg !== undefined ? 'weight_kg = ?' : null,
       petData.photo_url !== undefined ? 'photo_url = ?' : null,
     ].filter(Boolean) as string[];
 
@@ -58,6 +60,7 @@ export const petRepository = {
     if (petData.species_detail !== undefined) values.push(petData.species_detail ?? null);
     if (petData.breed !== undefined) values.push(petData.breed ?? null);
     if (petData.birth_date !== undefined) values.push(petData.birth_date ?? null);
+    if (petData.weight_kg !== undefined) values.push(petData.weight_kg ?? null);
     if (petData.photo_url !== undefined) values.push(petData.photo_url ?? null);
 
     values.push(id, userId);

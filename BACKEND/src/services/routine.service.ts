@@ -1,9 +1,8 @@
 import { routineRepository } from '../repositories/routine.repository';
 import { DailyRoutineRecord, RoutineLogPayload, RoutinePayload, RoutinePriority, RoutineRecord, RoutineLogRecord } from '../types';
 import { ApiError } from '../utils/errors';
-import { validateRoutineInput, validateRoutineLogInput } from '../utils/validators';
+import { normalizeRoutineCategory, validateRoutineInput, validateRoutineLogInput } from '../utils/validators';
 
-const allowedCategories = new Set(['ALIMENTACION', 'AGUA', 'HIGIENE', 'EJERCICIO', 'MEDICACION', 'LIMPIEZA', 'SOCIALIZACION', 'OTRO']);
 const allowedFrequencies = new Set(['DIARIA', 'SEMANAL', 'DIAS_ESPECIFICOS', 'UNICA']);
 const priorityRank: Record<string, number> = { ALTA: 0, MEDIA: 1, BAJA: 2 };
 const weekDays: Record<string, number> = {
@@ -27,7 +26,8 @@ export const routineService = {
       throw new ApiError(400, validation.message ?? 'La rutina enviada no es válida');
     }
 
-    if (!allowedCategories.has(payload.category.trim().toUpperCase())) {
+    const category = normalizeRoutineCategory(payload.category);
+    if (!category) {
       throw new ApiError(400, 'La categoría de la rutina es inválida');
     }
 
@@ -45,7 +45,7 @@ export const routineService = {
     }
     const routine = await routineRepository.create({
       ...payload,
-      category: payload.category.trim().toUpperCase(),
+      category,
       frequency: payload.frequency.trim().toUpperCase(),
       days_of_week: daysOfWeek.length ? daysOfWeek : null,
       description: payload.description ?? null,
@@ -72,8 +72,8 @@ export const routineService = {
 
   async update(userId: number, routineId: number, payload: Partial<RoutinePayload>): Promise<RoutineRecord> {
     if (payload.category !== undefined) {
-      const category = payload.category.trim().toUpperCase();
-      if (!allowedCategories.has(category)) {
+      const category = normalizeRoutineCategory(payload.category);
+      if (!category) {
         throw new ApiError(400, 'La categoría de la rutina es inválida');
       }
       payload.category = category;

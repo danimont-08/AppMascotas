@@ -391,8 +391,8 @@ private fun CalendarRoutineItem(routine: RoutineDto) {
 
 private fun RoutineDto.isScheduledOn(date: LocalDate): Boolean {
     if (!isActive) return false
-    val start = LocalDate.parse(startDate)
-    val end = endDate?.let(LocalDate::parse)
+    val start = LocalDate.parse(startDate.take(10))
+    val end = endDate?.let { LocalDate.parse(it.take(10)) }
     if (date.isBefore(start) || (end != null && date.isAfter(end))) return false
 
     val weekday = date.dayOfWeek.value % 7

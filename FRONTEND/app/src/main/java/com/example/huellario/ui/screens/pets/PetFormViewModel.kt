@@ -40,7 +40,8 @@ class PetFormViewModel(
                             species = baseSpecies,
                             specificSpecies = custom,
                             breed = pet.breed ?: "",
-                            birthDate = pet.birthDate ?: "",
+                            birthDate = pet.birthDate?.take(10) ?: "",
+                            weightKg = pet.weightKg?.toDoubleOrNull()?.let { w -> if (w % 1.0 == 0.0) w.toInt().toString() else w.toString() } ?: "",
                             existingPhotoUrl = pet.photoUrl,
                             isLoading = false
                         )
@@ -90,6 +91,12 @@ class PetFormViewModel(
         _uiState.update { it.copy(photoUri = uri) }
     }
 
+    fun onWeightChanged(weight: String) {
+        // Solo números y un separador decimal (punto o coma)
+        val clean = weight.filter { it.isDigit() || it == '.' || it == ',' }.take(6)
+        _uiState.update { it.copy(weightKg = clean, weightError = null) }
+    }
+
     fun savePet(context: Context, onSuccess: () -> Unit) {
         val currentState = _uiState.value
         val name = currentState.name.trim()
@@ -105,13 +112,22 @@ class PetFormViewModel(
             else -> currentState.species
         }
 
-        val formattedBirthDate = currentState.birthDate.trim().replace(" ", "-").replace("/", "-").ifEmpty { null }
+        // "" significa "sin fecha" / "sin peso": así también se pueden borrar al editar
+        val formattedBirthDate = currentState.birthDate.trim().replace(" ", "-").replace("/", "-")
+
+        val weightText = currentState.weightKg.trim().replace(',', '.')
+        val weight = weightText.toDoubleOrNull()
+        if (weightText.isNotEmpty() && (weight == null || weight <= 0.0 || weight > 300.0)) {
+            _uiState.update { it.copy(weightError = "Escribe un peso válido en kg (ej. 4.5)") }
+            return
+        }
 
         val petRequest = PetRequest(
             name = name,
             species = finalSpecies,
             breed = currentState.breed.trim().ifEmpty { null },
-            birthDate = formattedBirthDate
+            birthDate = formattedBirthDate,
+            weightKg = weightText
         )
 
         viewModelScope.launch {
@@ -127,9 +143,22 @@ class PetFormViewModel(
                 is ApiResult.Success -> {
                     val savedPet = result.data
                     if (currentState.photoUri != null) {
-                        val imageFile = getFileFromUri(context, currentState.photoUri)
-                        if (imageFile != null) {
-                            petRepository.uploadPetPhoto(savedPet.id, imageFile)
+                        val mimeType = context.contentResolver.getType(currentState.photoUri) ?: "image/jpeg"
+                        val imageFile = getFileFromUri(context, currentState.photoUri, mimeType)
+                        val uploadError = when {
+                            imageFile == null -> "No se pudo leer la foto seleccionada"
+                            else -> (petRepository.uploadPetPhoto(savedPet.id, imageFile, mimeType) as? ApiResult.Error)?.message
+                        }
+                        if (uploadError != null) {
+                            // La mascota ya quedó guardada; si se vuelve a guardar, se edita en lugar de duplicarla
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    petId = savedPet.id,
+                                    errorMessage = "La mascota se guardó, pero la foto no: $uploadError"
+                                )
+                            }
+                            return@launch
                         }
                     }
                     _uiState.update { it.copy(isLoading = false, isSuccess = true) }
@@ -145,10 +174,15 @@ class PetFormViewModel(
         }
     }
 
-    private fun getFileFromUri(context: Context, uri: Uri): File? {
+    private fun getFileFromUri(context: Context, uri: Uri, mimeType: String): File? {
         return try {
             val contentResolver = context.contentResolver
-            val file = File(context.cacheBufferDir(), "pet_temp_${System.currentTimeMillis()}.jpg")
+            val extension = when (mimeType.lowercase()) {
+                "image/png" -> "png"
+                "image/webp" -> "webp"
+                else -> "jpg"
+            }
+            val file = File(context.cacheBufferDir(), "pet_temp_${System.currentTimeMillis()}.$extension")
             val inputStream = contentResolver.openInputStream(uri) ?: return null
             val outputStream = FileOutputStream(file)
             inputStream.copyTo(outputStream)

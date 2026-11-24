@@ -61,16 +61,16 @@ export const routineRepository = {
     if (!existing) return null;
 
     const updates = [
-      payload.name !== undefined ? 'name = ?' : null,
-      payload.category !== undefined ? 'category = ?' : null,
-      payload.description !== undefined ? 'description = ?' : null,
-      payload.priority !== undefined ? 'priority = ?' : null,
-      payload.scheduled_time !== undefined ? 'scheduled_time = ?' : null,
-      payload.frequency !== undefined ? 'frequency = ?' : null,
-      payload.days_of_week !== undefined ? 'days_of_week = ?' : null,
-      payload.start_date !== undefined ? 'start_date = ?' : null,
-      payload.end_date !== undefined ? 'end_date = ?' : null,
-      payload.is_active !== undefined ? 'is_active = ?' : null,
+      payload.name !== undefined ? 'r.name = ?' : null,
+      payload.category !== undefined ? 'r.category = ?' : null,
+      payload.description !== undefined ? 'r.description = ?' : null,
+      payload.priority !== undefined ? 'r.priority = ?' : null,
+      payload.scheduled_time !== undefined ? 'r.scheduled_time = ?' : null,
+      payload.frequency !== undefined ? 'r.frequency = ?' : null,
+      payload.days_of_week !== undefined ? 'r.days_of_week = ?' : null,
+      payload.start_date !== undefined ? 'r.start_date = ?' : null,
+      payload.end_date !== undefined ? 'r.end_date = ?' : null,
+      payload.is_active !== undefined ? 'r.is_active = ?' : null,
     ].filter(Boolean) as string[];
 
     if (!updates.length) {

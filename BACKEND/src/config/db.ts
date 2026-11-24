@@ -12,6 +12,8 @@ export const pool: Pool = mariadb.createPool({
   acquireTimeout: 30000,
   connectTimeout: 30000,
   timezone: 'Z',
+  // Devuelve DATE como 'AAAA-MM-DD' (y DATETIME como texto) en lugar de objetos Date con hora UTC.
+  dateStrings: true,
   multipleStatements: false,
 });
 
