@@ -1,6 +1,9 @@
 import { query, queryOne } from '../config/db';
 import { DailyRoutineRecord, RoutineLogPayload, RoutineLogRecord, RoutinePayload, RoutineRecord } from '../types';
 
+// Orden de prioridad: ALTA primero, luego MEDIA y por último BAJA.
+const priorityOrder = "FIELD(r.priority, 'ALTA', 'MEDIA', 'BAJA')";
+
 const routineSelect = `SELECT r.*, r.days_of_week AS selected_days FROM routines r JOIN pets p ON p.id = r.pet_id`;
 
 export const routineRepository = {
@@ -18,7 +21,7 @@ export const routineRepository = {
       params.push(petId);
     }
 
-    sql += ' ORDER BY r.start_date DESC, r.scheduled_time ASC';
+    sql += ` ORDER BY ${priorityOrder}, r.start_date DESC, r.scheduled_time ASC`;
     return query<RoutineRecord>(sql, params);
   },
 
@@ -28,13 +31,14 @@ export const routineRepository = {
 
   async create(payload: RoutinePayload): Promise<number> {
     const result = await query<any>(
-      `INSERT INTO routines (pet_id, name, category, description, scheduled_time, frequency, days_of_week, start_date, end_date, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO routines (pet_id, name, category, description, priority, scheduled_time, frequency, days_of_week, start_date, end_date, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         payload.pet_id,
         payload.name,
         payload.category,
         payload.description ?? null,
+        payload.priority ?? 'MEDIA',
         payload.scheduled_time,
         payload.frequency,
         payload.days_of_week ? JSON.stringify(payload.days_of_week) : null,
@@ -60,6 +64,7 @@ export const routineRepository = {
       payload.name !== undefined ? 'name = ?' : null,
       payload.category !== undefined ? 'category = ?' : null,
       payload.description !== undefined ? 'description = ?' : null,
+      payload.priority !== undefined ? 'priority = ?' : null,
       payload.scheduled_time !== undefined ? 'scheduled_time = ?' : null,
       payload.frequency !== undefined ? 'frequency = ?' : null,
       payload.days_of_week !== undefined ? 'days_of_week = ?' : null,
@@ -76,6 +81,7 @@ export const routineRepository = {
     if (payload.name !== undefined) values.push(payload.name);
     if (payload.category !== undefined) values.push(payload.category);
     if (payload.description !== undefined) values.push(payload.description ?? null);
+    if (payload.priority !== undefined) values.push(payload.priority);
     if (payload.scheduled_time !== undefined) values.push(payload.scheduled_time);
     if (payload.frequency !== undefined) values.push(payload.frequency);
     if (payload.days_of_week !== undefined) values.push(payload.days_of_week ? JSON.stringify(payload.days_of_week) : null);
@@ -113,7 +119,7 @@ export const routineRepository = {
       params.push(petId);
     }
 
-    sql += ' ORDER BY r.pet_id, r.scheduled_time ASC';
+    sql += ` ORDER BY ${priorityOrder}, r.scheduled_time ASC, r.pet_id`;
     return query<DailyRoutineRecord>(sql, params);
   },
 

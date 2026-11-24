@@ -223,6 +223,41 @@ fun RoutineFormScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
+                    // Prioridad: define el orden en el feed (Alta aparece primero)
+                    Text(
+                        text = "Prioridad *",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = TextoCharcoal
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val priorities = listOf(
+                        "ALTA" to "Alta",
+                        "MEDIA" to "Media",
+                        "BAJA" to "Baja"
+                    )
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        priorities.forEach { (code, label) ->
+                            FilterChip(
+                                selected = uiState.priority == code,
+                                onClick = { viewModel.onPriorityChanged(code) },
+                                label = { Text(label, fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = priorityColor(code),
+                                    selectedLabelColor = BlancoPuro,
+                                    containerColor = AzulSuave,
+                                    labelColor = TextoCharcoal
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
                     HuellarioTextField(
                         value = uiState.scheduledTime,
                         onValueChange = { viewModel.onTimeChanged(it) },

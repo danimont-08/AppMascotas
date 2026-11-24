@@ -14,6 +14,7 @@ data class RoutineFormUiState(
     val title: String = "",
     val category: String = "ALIMENTACION",
     val description: String = "",
+    val priority: String = "MEDIA",
     val scheduledTime: String = "08:00",
     val frequency: String = "DIARIA",
     val startDate: String = LocalDate.now(ZoneId.of("America/Bogota")).toString(),

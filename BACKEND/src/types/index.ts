@@ -59,6 +59,7 @@ export type RoutineCategory =
   | 'LIMPIEZA'
   | 'SOCIALIZACION'
   | 'OTRO';
+export type RoutinePriority = 'ALTA' | 'MEDIA' | 'BAJA';
 export type RoutineStatus = 'PENDIENTE' | 'COMPLETADA' | 'NO_FINALIZADA' | 'OMITIDA';
 
 export interface RoutineRecord {
@@ -67,6 +68,7 @@ export interface RoutineRecord {
   name: string;
   category: RoutineCategory;
   description: string | null;
+  priority: RoutinePriority;
   scheduled_time: string;
   frequency: RoutineFrequency;
   days_of_week: string | null;
@@ -93,6 +95,7 @@ export interface RoutinePayload {
   name: string;
   category: string;
   description?: string | null;
+  priority?: string;
   scheduled_time: string;
   frequency: string;
   days_of_week?: unknown;

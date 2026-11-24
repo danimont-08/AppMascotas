@@ -25,6 +25,8 @@ data class RoutineDto(
     val category: String,
     @SerializedName("description")
     val description: String? = null,
+    @SerializedName("priority")
+    val priority: String? = "MEDIA",
     @SerializedName("scheduled_time")
     val scheduledTime: String,
     @SerializedName("frequency")
@@ -52,6 +54,21 @@ data class RoutineDto(
         }
 }
 
+/**
+ * Rango numérico de la prioridad: menor valor = aparece primero en el feed.
+ */
+fun RoutineDto.priorityRank(): Int = when (priority?.uppercase()) {
+    "ALTA" -> 0
+    "BAJA" -> 2
+    else -> 1
+}
+
+/**
+ * Ordena las rutinas por prioridad (ALTA -> MEDIA -> BAJA) y luego por hora.
+ */
+fun List<RoutineDto>.sortedByPriority(): List<RoutineDto> =
+    sortedWith(compareBy<RoutineDto>({ it.priorityRank() }, { it.scheduledTime }))
+
 fun RoutineDto.formatScheduledTime(): String {
         val localTime = LocalTime.parse(scheduledTime.take(5), DateTimeFormatter.ofPattern("HH:mm"))
         return localTime.format(DateTimeFormatter.ofPattern("hh:mm a", Locale.US))
@@ -69,6 +86,8 @@ data class RoutineRequest(
     val category: String,
     @SerializedName("description")
     val description: String? = null,
+    @SerializedName("priority")
+    val priority: String = "MEDIA",
     @SerializedName("scheduled_time")
     val scheduledTime: String,
     @SerializedName("frequency")

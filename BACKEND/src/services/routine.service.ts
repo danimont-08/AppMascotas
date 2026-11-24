@@ -1,10 +1,11 @@
 import { routineRepository } from '../repositories/routine.repository';
-import { DailyRoutineRecord, RoutineLogPayload, RoutinePayload, RoutineRecord, RoutineLogRecord } from '../types';
+import { DailyRoutineRecord, RoutineLogPayload, RoutinePayload, RoutinePriority, RoutineRecord, RoutineLogRecord } from '../types';
 import { ApiError } from '../utils/errors';
 import { validateRoutineInput, validateRoutineLogInput } from '../utils/validators';
 
 const allowedCategories = new Set(['ALIMENTACION', 'AGUA', 'HIGIENE', 'EJERCICIO', 'MEDICACION', 'LIMPIEZA', 'SOCIALIZACION', 'OTRO']);
 const allowedFrequencies = new Set(['DIARIA', 'SEMANAL', 'DIAS_ESPECIFICOS', 'UNICA']);
+const priorityRank: Record<string, number> = { ALTA: 0, MEDIA: 1, BAJA: 2 };
 const weekDays: Record<string, number> = {
   DOMINGO: 0, SUNDAY: 0, DOM: 0, SUN: 0,
   LUNES: 1, MONDAY: 1, LUN: 1, MON: 1,
@@ -48,6 +49,7 @@ export const routineService = {
       frequency: payload.frequency.trim().toUpperCase(),
       days_of_week: daysOfWeek.length ? daysOfWeek : null,
       description: payload.description ?? null,
+      priority: normalizePriority(payload.priority) ?? 'MEDIA',
       is_active: payload.is_active ?? true,
     });
 
@@ -75,6 +77,14 @@ export const routineService = {
         throw new ApiError(400, 'La categoría de la rutina es inválida');
       }
       payload.category = category;
+    }
+
+    if (payload.priority !== undefined) {
+      const priority = normalizePriority(payload.priority);
+      if (!priority) {
+        throw new ApiError(400, 'La prioridad de la rutina debe ser ALTA, MEDIA o BAJA');
+      }
+      payload.priority = priority;
     }
 
     if (payload.frequency !== undefined) {
@@ -112,7 +122,8 @@ export const routineService = {
 
   async getDaily(userId: number, date: string, petId?: number): Promise<DailyRoutineRecord[]> {
     const routines = (await routineRepository.listDaily(userId, date, petId))
-      .filter((routine) => isRoutineScheduledOnDate(routine, date));
+      .filter((routine) => isRoutineScheduledOnDate(routine, date))
+      .sort(compareByPriorityThenTime);
     const now = new Date();
     const nowInBogota = getBogotaDateTime(now);
 
@@ -186,6 +197,20 @@ export const routineService = {
     return updated;
   },
 };
+
+function normalizePriority(value: unknown): RoutinePriority | null {
+  if (typeof value !== 'string') return null;
+  const priority = value.trim().toUpperCase();
+  return priority in priorityRank ? (priority as RoutinePriority) : null;
+}
+
+// Más prioridad primero; a igual prioridad, la hora más temprana primero.
+function compareByPriorityThenTime(a: RoutineRecord, b: RoutineRecord): number {
+  const rankA = priorityRank[a.priority] ?? priorityRank.MEDIA;
+  const rankB = priorityRank[b.priority] ?? priorityRank.MEDIA;
+  if (rankA !== rankB) return rankA - rankB;
+  return a.scheduled_time.localeCompare(b.scheduled_time);
+}
 
 function isRoutineScheduledOnDate(routine: RoutineRecord, date: string): boolean {
   if (date < routine.start_date || (routine.end_date && date > routine.end_date)) return false;

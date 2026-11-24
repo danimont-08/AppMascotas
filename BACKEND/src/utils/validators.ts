@@ -161,6 +161,13 @@ export const validateRoutineInput = (input: unknown): { valid: boolean; message?
     return { valid: false, message: 'La categoría de la rutina es inválida' };
   }
 
+  if (body.priority !== undefined && body.priority !== null && body.priority !== '') {
+    const priority = typeof body.priority === 'string' ? body.priority.trim().toUpperCase() : '';
+    if (!['ALTA', 'MEDIA', 'BAJA'].includes(priority)) {
+      return { valid: false, message: 'La prioridad de la rutina debe ser ALTA, MEDIA o BAJA' };
+    }
+  }
+
   if (!['DIARIA', 'SEMANAL', 'DIAS_ESPECIFICOS', 'UNICA'].includes(frequency)) {
     return { valid: false, message: 'La frecuencia de la rutina es inválida' };
   }

@@ -3,6 +3,7 @@ package com.example.huellario.ui.screens.routines
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.huellario.data.model.ApiResult
+import com.example.huellario.data.model.sortedByPriority
 import com.example.huellario.data.repository.PetRepository
 import com.example.huellario.data.repository.RoutineRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,7 +45,7 @@ class RoutinesViewModel(
 
             when (val result = routineRepository.getDailyRoutines(currentState.selectedDate, currentState.selectedPetId)) {
                 is ApiResult.Success -> _uiState.update {
-                    it.copy(isLoading = false, dailyRoutines = result.data.routines, errorMessage = null)
+                    it.copy(isLoading = false, dailyRoutines = result.data.routines.sortedByPriority(), errorMessage = null)
                 }
                 is ApiResult.Error -> _uiState.update {
                     it.copy(isLoading = false, errorMessage = result.message)

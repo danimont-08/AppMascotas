@@ -19,6 +19,7 @@ const dailyRoutine: DailyRoutineRecord = {
   name: 'Alimentar',
   category: 'ALIMENTACION',
   description: null,
+  priority: 'MEDIA',
   scheduled_time: '11:00:00',
   frequency: 'DIARIA',
   days_of_week: null,
@@ -126,5 +127,29 @@ describe('routineService daily status', () => {
       scheduled_date: '2026-11-17',
       status: 'COMPLETADA',
     }));
+  });
+});
+
+describe('routineService daily priority order', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date('2026-11-17T12:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('lists higher priority routines first, then by scheduled time', async () => {
+    repositoryMock.listDaily.mockResolvedValue([
+      { ...dailyRoutine, id: 1, priority: 'BAJA', scheduled_time: '06:00:00' },
+      { ...dailyRoutine, id: 2, priority: 'MEDIA', scheduled_time: '20:00:00' },
+      { ...dailyRoutine, id: 3, priority: 'ALTA', scheduled_time: '22:00:00' },
+      { ...dailyRoutine, id: 4, priority: 'ALTA', scheduled_time: '21:00:00' },
+    ]);
+
+    const routines = await routineService.getDaily(7, '2026-11-18');
+
+    expect(routines.map((routine) => routine.id)).toEqual([4, 3, 2, 1]);
   });
 });

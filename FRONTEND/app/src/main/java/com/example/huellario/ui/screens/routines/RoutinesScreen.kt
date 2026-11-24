@@ -49,6 +49,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -311,6 +312,8 @@ fun RoutineCardItem(
         else -> "Pendiente"
     }
 
+    val priorityCode = routine.priority?.uppercase() ?: "MEDIA"
+
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = BlancoPuro),
@@ -392,6 +395,20 @@ fun RoutineCardItem(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
+                            .background(priorityColor(priorityCode).copy(alpha = 0.15f))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = priorityLabel(priorityCode),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = priorityColor(priorityCode)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
                             .background(Lavanda)
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
@@ -427,4 +444,16 @@ fun RoutineCardItem(
     }
 }
 
+/** Etiqueta visible de la prioridad de una rutina. */
+fun priorityLabel(priority: String): String = when (priority.uppercase()) {
+    "ALTA" -> "Alta"
+    "BAJA" -> "Baja"
+    else -> "Media"
+}
 
+/** Color asociado a cada prioridad (rojo alta, ambar media, verde baja). */
+fun priorityColor(priority: String): Color = when (priority.uppercase()) {
+    "ALTA" -> ErrorRed
+    "BAJA" -> SuccessGreen
+    else -> Color(0xFFB26A00)
+}

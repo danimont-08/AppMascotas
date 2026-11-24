@@ -61,6 +61,7 @@ class RoutineFormViewModel(
                                 title = routine.title,
                                 category = routine.category,
                                 description = routine.description ?: "",
+                                priority = routine.priority?.uppercase() ?: "MEDIA",
                                 scheduledTime = routine.scheduledTime.take(5),
                                 frequency = routine.frequency,
                                 startDate = routine.startDate,
@@ -89,6 +90,10 @@ class RoutineFormViewModel(
 
     fun onCategoryChanged(category: String) {
         _uiState.update { it.copy(category = category) }
+    }
+
+    fun onPriorityChanged(priority: String) {
+        _uiState.update { it.copy(priority = priority) }
     }
 
     fun onDescriptionChanged(description: String) {
@@ -141,6 +146,7 @@ class RoutineFormViewModel(
             title = title,
             category = state.category,
             description = state.description.trim().ifEmpty { null },
+            priority = state.priority,
             scheduledTime = state.scheduledTime.ifEmpty { "08:00" },
             frequency = state.frequency,
             startDate = state.startDate,
